@@ -20,9 +20,12 @@ int main(void) {
 }
 
 int str_length(char* str) {
-	int length = 0;
-	while(*(str+length) != '\0') {
-		length++;
+	if(str) {
+		int length = 0;
+		while(*(str+length) != '\0') {
+			length++;
+		}
+		return length;
 	}
-	return length;
+	return -1;
 }

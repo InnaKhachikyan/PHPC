@@ -2,19 +2,31 @@
 #include <stdlib.h>
 
 int main(void) {
-	int* ptr = (int*) malloc(sizeof(int));
-	*ptr = 23;
-	printf("%d\n", *ptr);
+	int* pointerToInt = (int*) malloc(sizeof(int));
 	
-	int* arrPtr = (int*) malloc(sizeof(int)*5);
-	int length = 5;
-	for(int i = 0; i < length; i++) {
-		*(arrPtr+i) = i;
-		printf("index %d is %d\n",i, *(arrPtr+i));
+	if(!pointerToInt) {
+		printf("Memory for int not allocated!\n");
+		return -1;
 	}
 
-	free(ptr);
-	free(arrPtr);
+	*pointerToInt = 23;
+	printf("%d\n", *pointerToInt);
+	
+	int* pointerToArray = (int*) malloc(sizeof(int)*5);
+	
+	if(!pointerToArray) {
+		printf("Memory for array not allocated!\n");
+		return -1;
+	}
+	
+	int arrayLength = 5;
+	for(int i = 0; i < arrayLength; i++) {
+		*(pointerToArray+i) = i;
+		printf("index %d is %d\n",i, *(pointerToArray+i));
+	}
+
+	free(pointerToInt);
+	free(pointerToArray);
 
 	return 0;
 }
