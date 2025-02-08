@@ -12,6 +12,10 @@ int main(void) {
 	printf("\n");
 
 	char* pointerToInput = (char*) malloc(sizeof(char)*10);
+	if(!pointerToInput) {
+		printf("Memory allocation failed!\n");
+		return -1;
+	}
 	printf("Enter a text!\n");
 	scanf("%s", pointerToInput);
 
