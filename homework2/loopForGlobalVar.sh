@@ -1,7 +1,7 @@
 
-PROGRAM="./a.out"
+PROGRAM="./globalVarThreadedSine"
 
-OUTPUT_FILE="output.txt"
+OUTPUT_FILE="outputGlobalVar.txt"
 
 > "$OUTPUT_FILE"
 

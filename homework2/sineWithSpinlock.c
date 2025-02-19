@@ -5,6 +5,7 @@
 #define PI 3.14159265358979323846
 
 double result = 0;
+pthread_spinlock_t spinLock;
 
 double degreesToRadians(double degree);
 double factorial(int n);
@@ -60,13 +61,15 @@ void* partialSine(void* arg) {
 	int end = args->end;
 	printf("Start is: %d\n",start);
 	printf("End is: %d\n", end);
-	//printf("Result is: %f\n", result);
-	double localResult = 0;	
+	//printf("Result is: %f\n", result);	
+	double localResult = 0;
 	while(start <= end) {
                 localResult += (((start%2 == 0) ? 1 : (-1))/(factorial(2*start+1)))*power(x,(2*start+1));
 		start++;
 	}
+	pthread_spin_lock(&spinLock);
 	result += localResult;
+	pthread_spin_unlock(&spinLock);
 	return NULL;
 }
 
@@ -103,9 +106,10 @@ void calculateWithNThreads(int angle, int n, int numberOfThreads) {
 
 
 int main(void) {
+	pthread_spin_init(&spinLock, PTHREAD_PROCESS_PRIVATE);
+
 	struct timespec startTime, endTime;
 	
-	// starting to calculate with 4 threads
 	result = 0;	
 	clock_gettime(CLOCK_MONOTONIC, &startTime);
 	
@@ -115,16 +119,15 @@ int main(void) {
 	double totalTime = (endTime.tv_sec - startTime.tv_sec) + ((endTime.tv_nsec - startTime.tv_nsec) / 1e9);
 
 	printf("Final result is: %f\n", result);
-	printf("Execution time with 4 threads is: %f\n", totalTime);
-
-	// reset result, starting to calculate with 8 results
+	printf("Execution time SPINLOCK with 4 threads is: %f\n", totalTime);
+	
 	result = 0;
 	clock_gettime(CLOCK_MONOTONIC, &startTime);
 	calculateWithNThreads(215, 40, 8);
 	clock_gettime(CLOCK_MONOTONIC, &endTime);
 	totalTime = (endTime.tv_sec - startTime.tv_sec) + ((endTime.tv_nsec - startTime.tv_nsec) / 1e9);
 	printf("Final result is: %f\n", result);
-	printf("Execution time with 8 threads is: %f\n", totalTime);
+	printf("Execution time SPINLOCK  with 8 threads is: %f\n", totalTime);
 	
 	/* free(args1);
 	free(args2);

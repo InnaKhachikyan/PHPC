@@ -109,13 +109,21 @@ int main(void) {
 	
 	clock_gettime(CLOCK_MONOTONIC, &startTime);
 
-	pthread_t sineThread1, sineThread2, sineThread3, sineThread4;
-	
 	double result = createThreads(215, 40, 4);
+
 	clock_gettime(CLOCK_MONOTONIC, &endTime);
+
 	double totalTime = (endTime.tv_sec - startTime.tv_sec) + ((endTime.tv_nsec - startTime.tv_nsec) / 1e9);
 	printf("Final result is: %f\n",result);
-	printf("Execution time is: %f\n", totalTime);
+	printf("Execution time with 4 threads is: %f\n", totalTime);
+
+	clock_gettime(CLOCK_MONOTONIC, &startTime);
+	result = createThreads(215, 40, 4);
+	clock_gettime(CLOCK_MONOTONIC, &endTime);
+	totalTime = (endTime.tv_sec - startTime.tv_sec) + ((endTime.tv_nsec - startTime.tv_nsec) / 1e9);
+	printf("Final result is: %f\n",result);
+	printf("Execution time with 8 threads is: %f\n", totalTime);
+
 	return 0;
 }
 
