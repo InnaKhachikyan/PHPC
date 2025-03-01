@@ -9,6 +9,7 @@
 #include <time.h>
 
 #define NUMBER_OF_THREADS 8
+
 int *vector1, *vector2, *vector3, *vector4;
 pthread_barrier_t barrier1;
 pthread_barrier_t barrier2;

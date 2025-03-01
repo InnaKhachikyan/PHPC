@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <unistd.h>
+
 #define NUMBER_OF_PLAYERS 8
 
 struct player* players;
@@ -47,6 +48,7 @@ void play(struct player* players) {
 	}
 	printf("*** THREAD NUMBER %lu WAITING ***\n",(unsigned long)pthread_self());
 	
+	//main thread waits for the others before starting the game
 	pthread_barrier_wait(&barrier);
 
 	startGame();

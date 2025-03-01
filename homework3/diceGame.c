@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <pthread.h>
 #include <stdlib.h>
+
 #define NUMBER_OF_PLAYERS 8
 #define GAME_ROUNDS 6
 
@@ -21,7 +22,7 @@ int main(void) {
     players = (struct player*)malloc(sizeof(struct player)*NUMBER_OF_PLAYERS);
     if(players == NULL) {
         printf("Memory allocation for players failed!\n");
-	return 1;
+	    return 1;
     }
 
     for(int i = 0; i < NUMBER_OF_PLAYERS; i++) {
@@ -29,12 +30,13 @@ int main(void) {
 	    players[i].rolledDice = 0;
 	    players[i].score = 0;
     }
+
     struct player *winner = play(players);
     if(winner != NULL) {
         printf("The winner is number %d player\n", winner->playerNumber);
     }
     else {
-	printf("Nobody wn the game!\n");
+	    printf("Nobody wn the game!\n");
     }
     free(players);
 }
@@ -46,18 +48,18 @@ struct player* play(struct player* players) {
         printf("Memory allocation for threads failed!\n");
     }
     pthread_barrier_init(&barrier, NULL, NUMBER_OF_PLAYERS);
-        for(int i = 0; i < NUMBER_OF_PLAYERS; i++) {
-            printf("*** CRETING THE THREAD NUMBER %d ***\n", i+1);
-            if(pthread_create((playerThreads+i), NULL,&playerRoll, (players +i))) {
-                perror("Thread creating failed!\n");
-	        }
+    for(int i = 0; i < NUMBER_OF_PLAYERS; i++) {
+        printf("*** CRETING THE THREAD NUMBER %d ***\n", i+1);
+        if(pthread_create((playerThreads+i), NULL,&playerRoll, (players +i))) {
+            perror("Thread creating failed!\n");
         }
+    }
 
-        for(int i = 0; i < NUMBER_OF_PLAYERS; i++) {
-            if(pthread_join(*(playerThreads+i),NULL)) {
-	            perror("Thread join failed!\n");
-	        }
+    for(int i = 0; i < NUMBER_OF_PLAYERS; i++) {
+        if(pthread_join(*(playerThreads+i),NULL)) {
+            perror("Thread join failed!\n");
         }
+    }
     free(playerThreads);
     pthread_barrier_destroy(&barrier);
     return sumUpGameWinner(players);
@@ -79,8 +81,8 @@ void sumUpRoundWinner(struct player* players) {
         }
     }
     if(numberOfWinners == 1) {
-	players[winnerIndex].score += 1;
-	printf("Player number %d won current round!\n", players[winnerIndex].playerNumber);
+        players[winnerIndex].score += 1;
+        printf("Player number %d won current round!\n", players[winnerIndex].playerNumber);
     }
     else {
 	    printf("Nobody won current round!\n");
@@ -120,7 +122,7 @@ void* playerRoll(void* arg) {
         if(currentPlayer->playerNumber == 1) {
             sumUpRoundWinner(players);
         }
-	pthread_barrier_wait(&barrier);
+	    pthread_barrier_wait(&barrier);
     }
     return NULL;
 }

@@ -1,3 +1,4 @@
+# compiles all the files and creates corresponding executables:
 
 all:
 	gcc diceGame.c -pthread -o diceGame

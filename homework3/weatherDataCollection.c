@@ -2,6 +2,7 @@
 #include <pthread.h>
 #include <stdlib.h>
 #include <unistd.h>
+
 #define NUMBER_OF_SENSORS 7
 
 struct sensor* sensors;
@@ -69,7 +70,7 @@ void* readTemperature(void* arg) {
 		printf(" THREAD NUMBER %lu WAITING \n",(unsigned long)pthread_self());
 		pthread_barrier_wait(&barrier1);
 		pthread_barrier_wait(&barrier2);
-		sleep(3);
+		sleep(3); // sleep is added just for better visibility on the terminal
 	}
 }
 
