@@ -6,7 +6,7 @@
 
 pthread_barrier_t barrier;
 struct player* players;
-struct player play(struct player* players);
+struct player* play(struct player* players);
 void* playerRoll(void* arg);
 void sumUpRoundWinner(struct player* players);
 struct player*  sumUpGameWinner(struct player* players);
@@ -19,19 +19,32 @@ struct player {
 
 int main(void) {
     players = (struct player*)malloc(sizeof(struct player)*NUMBER_OF_PLAYERS);
+    if(players == NULL) {
+        printf("Memory allocation for players failed!\n");
+	return 1;
+    }
+
     for(int i = 0; i < NUMBER_OF_PLAYERS; i++) {
 	    players[i].playerNumber = i + 1;
 	    players[i].rolledDice = 0;
 	    players[i].score = 0;
     }
-    struct player winner = play(players);
-    printf("The winner is number %d player\n", winner.playerNumber);
+    struct player *winner = play(players);
+    if(winner != NULL) {
+        printf("The winner is number %d player\n", winner->playerNumber);
+    }
+    else {
+	printf("Nobody wn the game!\n");
+    }
     free(players);
 }
 
 // play NUMBER_OF_ROUNDS times and return the winner
-struct player play(struct player* players) {
+struct player* play(struct player* players) {
     pthread_t* playerThreads = (pthread_t*)malloc(sizeof(pthread_t)*NUMBER_OF_PLAYERS);
+    if(playerThreads == NULL) {
+        printf("Memory allocation for threads failed!\n");
+    }
     pthread_barrier_init(&barrier, NULL, NUMBER_OF_PLAYERS);
         for(int i = 0; i < NUMBER_OF_PLAYERS; i++) {
             printf("*** CRETING THE THREAD NUMBER %d ***\n", i+1);
@@ -47,7 +60,7 @@ struct player play(struct player* players) {
         }
     free(playerThreads);
     pthread_barrier_destroy(&barrier);
-    return *(sumUpGameWinner(players));
+    return sumUpGameWinner(players);
 }
 
 void sumUpRoundWinner(struct player* players) {
@@ -67,6 +80,10 @@ void sumUpRoundWinner(struct player* players) {
     }
     if(numberOfWinners == 1) {
 	players[winnerIndex].score += 1;
+	printf("Player number %d won current round!\n", players[winnerIndex].playerNumber);
+    }
+    else {
+	    printf("Nobody won current round!\n");
     }
 }
 
@@ -95,14 +112,15 @@ struct player* sumUpGameWinner(struct player* players) {
 void* playerRoll(void* arg) {
     struct player* currentPlayer = (struct player*) arg;
     for(int i = 0; i < GAME_ROUNDS; i++) {
+        printf("   ***   ROUND NUMBER %d   ***\n", i+1);
         currentPlayer->rolledDice = rand()%6 + 1;
         printf("!!! WAITING AT THE BARRIER Thread id: %lu !!!\n", (unsigned long)pthread_self());
-        printf("   ***   ROUND NUMBER %d   ***\n", i+1);
         pthread_barrier_wait(&barrier);
         // This if condition is to ensure that only one thread sums up the round
         if(currentPlayer->playerNumber == 1) {
             sumUpRoundWinner(players);
         }
+	pthread_barrier_wait(&barrier);
     }
     return NULL;
 }

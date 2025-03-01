@@ -18,6 +18,10 @@ void* get_ready(void* arg);
 
 int main(void) {
 	players = (struct player*)malloc(sizeof(struct player)*NUMBER_OF_PLAYERS);
+	if(players == NULL) {
+		printf("Memory allocation for the players failed!\n");
+		return 1;
+	}
 
 	for(int i = 0; i < NUMBER_OF_PLAYERS; i++) {
 		players[i].playerNumber = i + 1;
@@ -31,6 +35,10 @@ int main(void) {
 
 void play(struct player* players) {
 	pthread_t* threads = (pthread_t*)malloc(sizeof(pthread_t)*NUMBER_OF_PLAYERS);
+	if(threads == NULL) {
+		printf("Memory allocation for threads failed!\n");
+		exit(1);
+	}
 	pthread_barrier_init(&barrier,NULL,(NUMBER_OF_PLAYERS+1));	
 	for(int i = 0; i < NUMBER_OF_PLAYERS; i++) {
 		if(pthread_create((threads+i),NULL,&get_ready,(players + i))){
