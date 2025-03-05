@@ -1,3 +1,6 @@
+link:
+
+https://github.com/InnaKhachikyan/PHPC/tree/main/homework3
 
 Assignment 1:
 The struct player has playerNumber, rolledDice (which stores the dice that was rolled for that player most recently) and score which is incremented if the player has won the current round. The game is summed up according to the score (the player who has the highest score wins). If 2 or more players have equal highest rolledDice, nobody wins. One barrier is put after rolling the dice, so that everyone waits untill all the threads have rolled the dice. The second barrier is put after if condition (if playerNumber == 1), this ensures that all the other threads wait at the barrier while the first thread sums up the winner of the round (so that nobody rolls dice until the round winner is summed up). Then the first thread reaches the barrier after summing up the roundWinner after the if condition and the next round begins.
