@@ -1,0 +1,62 @@
+Assignment 1: Vectorized Min/Max Search
+Goal: Find the minimum or maximum value in an array using SIMD.
+
+Implement a naive loop-based min/max search.
+Use SIMD to process multiple elements in parallel
+Compare the SIMD approach with the scalar approach.
+ 
+Assignment 2: Convolution with SIMD (1D Filter)
+Goal: Apply a convolution filter to an array using SIMD.
+
+Implement a naive 1D convolution kernel:
+Output[i] = Input[i-1] * w1 + Input[i] * w2 + Input[i+1] * w3
+
+Use SIMD intrinsics to optimize.
+Measure execution time before and after vectorization.
+ 
+Assignment 3: Parallel Prefix Sum (Scan)
+Goal: Compute the prefix sum (exclusive or inclusive) using SIMD.
+
+Implement a naive prefix sum:
+A[i] = A[i] + A[i-1] + A[i-2] + ... + A[0]
+
+Optimize using SIMD intrinsics (_mm_add_epi32, _mm256_add_epi32 or other).
+Compare the SIMD and scalar versions.
+ 
+Assignment 4: Matrix-Vector Multiplication
+Goal: Optimize matrix-vector multiplication using SIMD.
+
+Implement matrix-vector multiplication in a naive way.
+Optimize it using SIMD (processing multiple vector elements at once).
+Compare execution time before and after vectorization.
+ 
+Assignment 5: Vectorized String Processing - Case Conversion
+Goal: Convert a string to uppercase using SIMD.
+
+Implement a scalar toupper() function for a string.
+Use SIMD (_mm256_cmplt_epi8, _mm256_add_epi8) to convert multiple characters at once.
+Compare performance improvements.
+ Hint (function names may vary depending on version):
+
+Load 32 Characters at a Time
+
+Use _mm256_loadu_si256() to load 32 bytes from the input string.
+Identify Lowercase Letters (a-z)
+
+The ASCII range of lowercase letters is 'a' (97) to 'z' (122).
+We compare each character to check if it's in this range:
+Condition 1: data >= 'a' → Use _mm256_cmpgt_epi8(data, 'a' - 1)
+Condition 2: data <= 'z' → Use _mm256_cmpgt_epi8('z', data)
+Both conditions must be true → Use _mm256_and_si256().
+Convert to Uppercase
+
+The difference between uppercase and lowercase in ASCII is 32 (0x20 in hex).
+Flipping bit 5 (0x20) converts lowercase to uppercase.
+Use _mm256_xor_si256() to flip the case for only identified lowercase letters.
+ 
+Assignment 6: Image Processing - Grayscale Conversion
+Goal: Convert a BMP RGB image to grayscale using SIMD.
+
+Given an image stored as BMP RGB 24-bit format, compute grayscale values using: gray=0.299×R+0.587×G+0.114×B
+Use SIMD intrinsics to process multiple pixels at once.
+Compare SIMD vs. non-SIMD performance.
