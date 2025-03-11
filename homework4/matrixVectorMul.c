@@ -4,7 +4,7 @@
 #include <time.h>
 
 #define ROWS 12
-#define COLS 100000000
+#define COLS 100000003
 
 int *vector, *outputVector, *simdOutputVector;
 int **matrix;
@@ -40,20 +40,7 @@ int main() {
 	clock_t initEnd = clock();
 	double initTotal = (double)(initEnd-initStart)/CLOCKS_PER_SEC;
 	printf("ARRAY INIT TIME: %f sec\n", initTotal);
-/*
-	printf("MATRIX\n");
-	for(int i = 0; i < ROWS; i++) {
-		for(int j = 0; j < COLS; j++) {
-			printf("%d ", matrix[i][j]);
-		}
-		printf("\n");
-	}
-	printf("VECTOR\n");
-	for(int i = 0; i < COLS; i++) {
-		printf("%d ", vector[i]);
-	}
-	printf("\n");
-*/
+
 	clock_t iterStart = clock();
 	printf("OUTPUT ITERATIVE\n");
 	matrixVectorIter(matrix, vector, outputVector);
@@ -77,7 +64,14 @@ int main() {
 	double simdTotal = (double)(simdEnd - simdStart)/CLOCKS_PER_SEC;
 	printf("SIMD TOTAL TIME: %f sec\n",simdTotal); 
 
-
+	free(matrix);
+	matrix = NULL;
+	free(vector);
+	vector = NULL;
+	free(outputVector);
+	outputVector = NULL;
+	free(simdOutputVector);
+	simdOutputVector = NULL;
 }
 
 void matrixVectorIter(int **matrix, int vector[], int output[]) {
@@ -90,29 +84,27 @@ void matrixVectorIter(int **matrix, int vector[], int output[]) {
 
 void simdMatrixVector(int **matrix, int vector[], int output[]){
 	__m256i avxVectors[COLS/8+1];
-	for(int i = 0; i < COLS/8+1; i++) {
-		avxVectors[i] = _mm256_loadu_si256((const __m256i*)&vector[i*8]);
+	int k,i,j;
+	for(k = 0; k < COLS/8; k++) {
+		avxVectors[k] = _mm256_loadu_si256((const __m256i*)&vector[k*8]);
 	}
-	for(int i = 0; i < ROWS; i++) {
+	for(i = 0; i < ROWS; i++) {
 		int sum = 0;
-		for(int j = 0; j < COLS-(COLS%8); j+=8) {
-			__m256i tmpOutput = _mm256_setzero_si256();
+		for(j = 0; j < COLS-(COLS%8); j+=8) {
 			__m256i arg1 = _mm256_loadu_si256((const __m256i*)&matrix[i][j]);
 			__m256i arg2 = avxVectors[j/8];
 			__m256i product = _mm256_mullo_epi32(arg1, arg2);
-/*			int tmp[8];
-			_mm256_storeu_si256((__m256i*)&tmp[0],product);
-			for(int k = 0; k < 8; k++) {
-				sum += tmp[k];
-			}
-*/
+
+			// horizontal addition
 			__m256i hadd = _mm256_hadd_epi32(product, product);
 			hadd = _mm256_hadd_epi32(hadd, hadd);
-			int lowerSum = _mm256_extract_epi32(hadd, 0);
-			int upperSum = _mm256_extract_epi32(hadd, 4);
+			int lowerSum = _mm256_extract_epi32(hadd, 3);
+			int upperSum = _mm256_extract_epi32(hadd, 7);
 			sum += lowerSum + upperSum;
-			
 		}
 		output[i] = sum;
-	}
+		for(; j < COLS; j++) {
+			output[i] += matrix[i][j]*vector[j];
+		}
+	}	
 }

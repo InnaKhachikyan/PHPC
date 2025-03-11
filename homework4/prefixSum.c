@@ -3,39 +3,40 @@
 #include <immintrin.h>
 #include <time.h>
 
-#define SIZE 1000000001
-int *values, *outputScalar, *outputSimd, *outputSimd2;
+#define SIZE 1000000000
 
-void scalarPrefixSum(int input[], int output[]);
+int *values, *outputNaive, *outputSimd, *outputSimd2;
+
+void naivePrefixSum(int input[], int output[]);
 void simdPrefixSum(int input[], int output[]);
 void simdPrefixSum2(int input[], int output[]);
+
 int main() {
 	values = (int*)malloc(sizeof(int)*SIZE);
-	outputScalar = (int*)malloc(sizeof(int)*SIZE);
+	outputNaive = (int*)malloc(sizeof(int)*SIZE);
 	outputSimd = (int*)malloc(sizeof(int)*SIZE);
 	outputSimd2 = (int*)malloc(sizeof(int)*SIZE);
-	if(values == NULL || outputScalar == NULL || outputSimd == NULL) {
+	if(values == NULL || outputNaive == NULL || outputSimd == NULL) {
 		printf("Memory allocation failed!\n");
 		return 1;
 	}
 
 	srand(time(NULL));
-	//initializing the array
+
 	clock_t initStart = clock();
 	for(int i = 0; i < SIZE; i++) {
 		values[i] = rand()%10;
-		//printf("values[%d] is: %d\n", i, values[i]);
-		outputScalar[i] = 0;
+		outputNaive[i] = 0;
 		outputSimd[i] = 0;
 		outputSimd2[i] = 0;
 	}
 	clock_t initEnd = clock();
 	double initTotal = (double)(initEnd-initStart)/CLOCKS_PER_SEC;
 
-	clock_t scalarStart = clock();
-	scalarPrefixSum(values, outputScalar);
-	clock_t scalarEnd = clock();
-	double scalarTotal = (double)(scalarEnd - scalarStart)/CLOCKS_PER_SEC;
+	clock_t naiveStart = clock();
+	naivePrefixSum(values, outputNaive);
+	clock_t naiveEnd = clock();
+	double naiveTotal = (double)(naiveEnd - naiveStart)/CLOCKS_PER_SEC;
 
 	clock_t simdStart = clock();
 	simdPrefixSum(values, outputSimd);
@@ -48,23 +49,25 @@ int main() {
 	double simd2Total = (double)(simd2End - simd2Start)/CLOCKS_PER_SEC;
 
 	printf("Array init time: %f sec\n", initTotal);
-	printf("Scalar prefix sum time: %f sec\n", scalarTotal);
+	printf("Naive prefix sum time: %f sec\n", naiveTotal);
 	printf("Simd prefix sum time: %f sec\n", simdTotal);
 	printf("Simd2 prefix sum time: %f sec\n", simd2Total);
-	printf("SCALAR OUTPUT: %d\n", outputScalar[SIZE-1]);
+	printf("NAIVE OUTPUT: %d\n", outputNaive[SIZE-1]);
 	printf("SIMD OUTPUT: %d\n", outputSimd[SIZE-1]);
 	printf("SIMD2 OUTPUT: %d\n", outputSimd2[SIZE-1]);
 
 	free(values);
 	values = NULL;
-	free(outputScalar);
-	outputScalar = NULL;
+	free(outputNaive);
+	outputNaive = NULL;
 	free(outputSimd);
 	outputSimd = NULL;
+	free(outputSimd2);
+	outputSimd2 = NULL;
 	return 0;
 }
 
-void scalarPrefixSum(int input[], int output[]) {
+void naivePrefixSum(int input[], int output[]) {
 	output[0] = input[0];
 	for(int i = 1; i < SIZE; i++) {
 		output[i] = output[i-1] + input[i];
@@ -73,8 +76,9 @@ void scalarPrefixSum(int input[], int output[]) {
 
 //VERSION 1
 void simdPrefixSum(int input[], int output[]) {
-	output[0] = input[0];	
-	for(int i = 1; i < SIZE-(SIZE%8); i += 8) {
+	output[0] = input[0];
+	int i;	
+	for(i = 1; i < SIZE-(SIZE%8); i += 8) {
 		__m256i tmpOutput = _mm256_set1_epi32(output[i-1]);
 		__m256i chunk = _mm256_loadu_si256((const __m256i*)&input[i]);
 		__m256i sum = chunk;
@@ -97,12 +101,18 @@ void simdPrefixSum(int input[], int output[]) {
 		sum = _mm256_add_epi32(sum, tmpOutput);
 		_mm256_storeu_si256((__m256i*)&output[i],sum);
 	}
+
+	for(; i < SIZE; i++) {
+		output[i] = output[i-1] + input[i];
+	}
+
 }
 
 // VERSION 2
 void simdPrefixSum2(int input[], int output[]) {
     output[0] = input[0];
-    for (int i = 1; i < SIZE - (SIZE % 8); i += 8) {
+	int i;
+    for (i = 1; i < SIZE - (SIZE % 8); i += 8) {
 	    __m256i tmpOutput = _mm256_set1_epi32(output[i-1]);
 	    __m256i sum = _mm256_loadu_si256((const __m256i*)&input[i]);
 	    
@@ -123,5 +133,8 @@ void simdPrefixSum2(int input[], int output[]) {
 
 	    _mm256_storeu_si256((__m256i*)&output[i], sum);
     }
+	for(; i < SIZE; i++) {
+		output[i] = output[i-1] + input[i];
+	}
 }
 
