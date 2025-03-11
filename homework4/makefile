@@ -5,6 +5,7 @@ all:
 	gcc -mavx2 -O0 -o convolution convolution.c
 	gcc -mavx2 -O0 -o prefixSum prefixSum.c
 	gcc -mavx2 -O0 -o matrixVectorMul matrixVectorMul.c
+	gcc -mavx2 -O0 -o stringProcessing stringProcessing.c
 	ulimit -s unlimited
 
 test_min:
@@ -18,3 +19,6 @@ test_prefix:
 
 test_mult:
 	./matrixVectorMul
+
+test_string:
+	./stringProcessing string.txt 

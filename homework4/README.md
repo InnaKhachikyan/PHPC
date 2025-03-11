@@ -78,6 +78,25 @@ For huge inputs (like the one in the program), simd is nearly 30-35% faster than
 
 ASSIGNMENT 5:
 
+I created a file string.txt where I copied some text from a book.
+When executing the program I pass as an argument the file to the main function, and pass it to the function reading from the file and loading the whole text to a string.
+
+reading function first seeks the end of file, to find out the actual size, then brings the pointer back to the start of the file, then reads the file one by one byte and puts in the array of chars 'input'. It works with the variable textLength which was set to the actual size with the help of fseek function.
+
+Then the string is processed through 2 functions: one is with naive iterative approach, the other one is with SIMD approach.
+The output of the simd approach is being written in the output.txt file (it is created if not existing).
+
+Simd approach uses AVX registers to perform the operations on 32 chars at once:
+I load 96 to the register smallestLowercase (the lowercases start from 97).
+Then load 123 to the register greatestLowercase (the lowercases end with 122).
+
+cmpgt compares the first argument with the second, and puts all bits 1 in the cells where the first argument was strictly greater than the second argument. So after doing cmpgt(currentLine, smallestLowercase) resultCmp1 will store all bit 1-s for the chars, whoses value was strictly greater than 96.
+Then cmpgt(greatestLowercase, currentLine) stores the result in resultCmp2 (whenever a char is less than 123, all bits are set to 1).
+I do AND resultCmp1, resultCmp2 (so the result will store all bits 1-s for the chars whose values were strictly greater than 96 and strictly smaller than 123 - which means those are ascii lowercases).
+Then I do AND the result with the conversion register (which is preloaded with 32 integer), so as a result 32 will be present only for those indices where the char was lowercase.
+Then I subtract from the current 32 chars the conversion register (which means it will subtract 32 from all the found lowercase chars and make those uppercase).
+
+Running time: SIMD approach dependent from the execution runs from 6 to 10 times faster.
 
 
 
