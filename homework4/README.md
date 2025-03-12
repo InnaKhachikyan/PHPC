@@ -1,3 +1,9 @@
+HOW TO RUN:
+There is a makefile for compilation of all files;
+The string processing assignment can be executed with "make test_string" command;
+The image processing program can be executed with "make test_image" command.
+
+
 ASSIGNMENT 1:
 
 Array is initialized with some random values.
@@ -99,4 +105,38 @@ Then I subtract from the current 32 chars the conversion register (which means i
 Running time: SIMD approach dependent from the execution runs from 6 to 10 times faster.
 
 
+ASSIGNMENT 6:
 
+I examined the structure of the BMP headers, but the types inside the struct (uint32_t, int32_t etc.) were advised by an AI. #pragma push and pop are used to avoid any padding/alginment in memory allocation of the struct in order to read and load the binary data from the headrs into the fields.
+
+In the readHeaders function we open the file in read binary mode.
+1) fread starts at the beginning of the file and reads bytes equal to the size of FileHeader struct.
+2) fread starts at where the pointer was left (we read the file headers now it points to the start of the info headers) and reads bytes equal to the size of InfoHeader struct.
+
+if the signature of the file is not "BM", than we do not have a BMP file, no need to continue.
+
+padding is used to allign the image in a width divisible by 4.
+(4 - (infoHeader * 3)%4)%4 formula helps to find out how many bytes are used for the padding.
+
+rowSize is the width + padding.
+
+I had several difficulties while writing the simd approach:
+
+The data is in unsigned chars. But loading it to registers, I would not be able to multiply with floats (as mul arguments should be both of the same type).
+I tried to typecast the chars to floats, then do operations:
+doing shuffles to get the blues, greens and reds separately (giving the indices for each separately), e.g. __m256i extractBlue = _mm256_setr_epi32(0, 3, 6, 9, 12, 15, 18, 21);
+and then:
+__m256i blues = _mm256_permutevar8x32_ps(current, extractBlue);
+
+But due to some miscalculations the image turned almost fully black.
+
+I also tried to shuffle the register with chars, then do calculations.
+But the difficulty was to convert the register of chars into register of floats.
+In the process again there were some miscalculations, due to which the image got some miscoloring.
+
+So, finally (with some help of AI), I wrote this version where with the help of AND and shift right operations the blue green and red values are extracted.
+
+I noticed that the image quality is dropped in comparison with the greyscale of iterative version, but couldn't find due to what miscalculations this occurs.
+
+Running time:
+Simd approach is 25-30% faster.
