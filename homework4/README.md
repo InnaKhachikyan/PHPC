@@ -1,6 +1,9 @@
 HOW TO RUN:
+
 There is a makefile for compilation of all files;
+
 The string processing assignment can be executed with "make test_string" command;
+
 The image processing program can be executed with "make test_image" command.
 
 

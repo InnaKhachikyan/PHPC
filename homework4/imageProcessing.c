@@ -4,8 +4,6 @@
 #include <stdlib.h>
 #include <time.h>
 
-int padding, rowSize, pixelsSize;
-
 #pragma pack(push, 1)
 struct FileHeader {
 	unsigned char signature[2];
