@@ -23,11 +23,10 @@ int main() {
 	resultOmp = fibonacciOmp(n);
 	printf("FINAL RESULT OMP n = %d: %ld\n", n, resultOmp);
 
-
 	return 0;
 }
 
-//to check that the OMP result is the correct
+//to check that the OMP result is correct
 long fibonacciDP(int n) {
     if (n == 0) return 0;
     if (n == 1) return 1;
@@ -43,6 +42,7 @@ long fibonacciDP(int n) {
     return dp[n];
 }
 
+//to visualize what needs to be made parallel
 long fibonacciRec(int n) {
 	if(n == 0) return 0;
 	if(n == 1) return 1;
@@ -51,7 +51,7 @@ long fibonacciRec(int n) {
 	return result;
 }
 	
-
+//a single thread calls the recursive method on input n
 long fibonacciOmp(int n) {
 	long finalResult;
 	#pragma omp parallel
@@ -65,6 +65,7 @@ long fibonacciOmp(int n) {
 	return finalResult;
 }
 
+//the recursive method
 long fibonacciTask(int n) {
 	long fib1, fib2, result;
 	if(n <= 10) {
