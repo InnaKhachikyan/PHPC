@@ -14,7 +14,7 @@ Use appropriate synchronization mechanisms to avoid data races.
 
 The program should take an integer num as input and output F(num) 
 
-Hints:
+Hints: 
 
 Use #pragma omp task to create tasks for recursive calls.
 
