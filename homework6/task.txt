@@ -1,0 +1,78 @@
+Implement and modify CUDA kernels to observe and understand the performance impact of divergent branches.
+
+Step 1: Write a Kernel With No Divergence
+Objective:
+Write a CUDA kernel where all threads in a warp take the same execution path.
+
+Instructions:
+
+Allocate a large array of integers (e.g., 1 million elements).
+
+Initialize the array to some values (e.g., 1 .. 1mln).
+
+Write a CUDA kernel that multiplies each element by 2.
+
+All threads should execute the same path.
+
+Sample structure:
+
+__global__ void no_divergence(int* data) {
+    int idx = threadIdx.x + blockIdx.x * blockDim.x;
+    // All threads follow the same branch
+    if (true) {
+        data[idx] *= 2;
+    }
+}
+
+
+Step 2: Introduce Divergence
+Objective:
+Write a kernel with a branch that causes divergence within a warp.
+
+Instructions:
+
+Modify the previous kernel so that:
+
+Even-indexed threads multiply by 2
+
+Odd-indexed threads multiply by 3
+
+Use if (idx % 2 == 0) to create the divergence.
+
+Hint: Threads within a warp will now take different paths.
+
+
+Step 3: Minimize Divergence With Warp-Aligned Branches
+Objective:
+Reduce divergence by structuring conditions so entire warps follow the same path.
+
+Instructions:
+
+Use the following condition: if ((idx / warpSize) % 2 == 0) // warp-aligned decision
+
+Let threads in the same warp do the same thing.
+
+One warp multiplies by 2
+
+Next warp multiplies by 3
+
+
+Step 4: Measure and Compare Performance
+Objective:
+Measure the performance impact of divergence.
+
+Instructions:
+
+Use CUDA events to time execution of:
+
+Step 1 kernel (no divergence)
+
+Step 2 kernel (divergence within warp)
+
+Step 3 kernel (warp-aligned branching)
+
+Report:
+
+Execution time
+
+Any noticeable performance difference
