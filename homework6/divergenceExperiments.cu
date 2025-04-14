@@ -92,7 +92,7 @@ void noDivergenceTest(int *data, int size) {
 	cudaDTHcopy(data, d_arr, size);
 
 	cudaFree(d_arr);
-  cudaEventDestroy(start);
+	cudaEventDestroy(start);
 	cudaEventDestroy(stop);
 }
 
@@ -141,7 +141,7 @@ void divergenceTest(int *data, int size) {
 	cudaDTHcopy(data, d_arr, size);
 
 	cudaFree(d_arr);
-  cudaEventDestroy(start);
+	cudaEventDestroy(start);
 	cudaEventDestroy(stop);
 }
 
@@ -196,13 +196,13 @@ void warpAlignedTest(int *data, int size) {
 int main() {
 	data_no_div = initializeArray(data_no_div, SIZE);
 	data_div_dummy = initializeArray(data_div_dummy, SIZE);
-  data_div = initializeArray(data_div, SIZE);
+	data_div = initializeArray(data_div, SIZE);
 	data_min_div = initializeArray(data_min_div, SIZE);
   
-  printf("DUMMY RUN: ");
-  divergenceTest(data_div_dummy, SIZE);
+	printf("DUMMY RUN: ");
+	divergenceTest(data_div_dummy, SIZE);
 
-  printf("*** TIME TESTS ***\n");
+	printf("*** TIME TESTS ***\n");
   
 	divergenceTest(data_div, SIZE);
 	// for(int i = 0; i < SIZE; i += 333) {
