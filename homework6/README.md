@@ -41,7 +41,6 @@ These host methods do the exact steps as noDivergence except for the calls to ke
 The main method initializes the arrays, calls the host functions with corresponding arrays and in the end frees all the allocated memory and sets the pointers to NULL.
 
 ## Performance
-
 I increazed the number of elements to observe the difference of performaces better.
 Initially, I tried calling no_divergence method first, and saw that it ran slower than expected, the difference between non-divergent and divergent kernel was not so big:
 

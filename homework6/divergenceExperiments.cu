@@ -1,4 +1,5 @@
 %%writefile divergenceExperiments.cu
+
 #include <cuda_runtime.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -60,7 +61,6 @@ __global__ void noDivergenceKernel(int *d_arr, int size) {
 }
 
 void noDivergenceTest(int *data, int size) {
-
 	int *d_arr = nullptr;
 	allocCuda(&d_arr, data, size);
 	cudaHTDcopy(d_arr, data, size);
@@ -109,7 +109,6 @@ __global__ void branchDivergenceKernel(int *d_arr, int size) {
 }
 
 void divergenceTest(int *data, int size) {
-
 	int *d_arr = nullptr;
 	allocCuda(&d_arr, data, size);
 	cudaHTDcopy(d_arr, data, size);

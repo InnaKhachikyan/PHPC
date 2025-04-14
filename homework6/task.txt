@@ -24,6 +24,7 @@ __global__ void no_divergence(int* data) {
     }
 }
 
+
 Step 2: Introduce Divergence
 Objective:
 Write a kernel with a branch that causes divergence within a warp.
@@ -40,6 +41,7 @@ Use if (idx % 2 == 0) to create the divergence.
 
 Hint: Threads within a warp will now take different paths.
 
+
 Step 3: Minimize Divergence With Warp-Aligned Branches
 Objective:
 Reduce divergence by structuring conditions so entire warps follow the same path.
@@ -53,6 +55,7 @@ Let threads in the same warp do the same thing.
 One warp multiplies by 2
 
 Next warp multiplies by 3
+
 
 Step 4: Measure and Compare Performance
 Objective:
