@@ -50,20 +50,22 @@ NON-DIVERGENT KERNEL time: 3.519168 ms
 DIVERGENT KERNEL time: 3.578304 ms
 WARP ALIGNED DIVERGENCE time: 3.342912 ms
 
-After I changed the order: I called the divergent function first, then the other 2 I got this results:
+After I changed the order: I called the divergent function first, then the other 2 I got these results:
 DIVERGENT KERNEL time: 3.723744 ms
 NON-DIVERGENT KERNEL time: 3.415360 ms
 WARP ALIGNED DIVERGENCE time: 3.344576 ms
 
 Here the difference is more obvious.
 
-However, I called the divergent function twice (one for warmup, the second for the actual results), and the result was this:
+However, afterwards I decided to call the divergent function twice (one for warmup, the second for the actual results), and the result was this:
 
-DIVERGENT KERNEL time: 3.681120 ms
-DIVERGENT KERNEL time: 3.548704 ms
-NON-DIVERGENT KERNEL time: 3.307744 ms
-WARP ALIGNED DIVERGENCE time: 3.254880 ms
+DUMMY RUN: DIVERGENT KERNEL time: 3.718912 ms
+*** TIME TESTS ***
+DIVERGENT KERNEL time: 3.556384 ms
+NON-DIVERGENT KERNEL time: 3.285824 ms
+WARP ALIGNED DIVERGENCE time: 3.187360 ms
 
-the first call to divergent kernel takes more time than the second call to the same kernel.
-And still, divergent kernel is 0.25 ms slower than non-divergent one, and 0.3 ms slower than the warp-aligned one.
+The first call to divergent kernel takes more time than the second call to the same kernel.
+And still, divergent kernel is nearly 0.27 ms slower than non-divergent one, and 0.37 ms slower than the warp-aligned one.
 
+These are approximate results as the timing differs from run to run.
