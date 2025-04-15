@@ -97,7 +97,7 @@ void outputGreyScale(char *outputFileName, struct FileHeader *fileHeader, struct
 
 __global__ void image_processing(unsigned char *pixels, int width, int height, int pixelsSize, int rowSize) {
 	int index = threadIdx.x + blockIdx.x * blockDim.x;
-  int totalPixels = abs(height) * width;
+	int totalPixels = abs(height) * width;
 
 	if(index < totalPixels) {
 		int row = index/width;
@@ -105,8 +105,8 @@ __global__ void image_processing(unsigned char *pixels, int width, int height, i
 		int pixelIndex = row * rowSize + col * 3;
 
 		unsigned char b = pixels[pixelIndex];
-        unsigned char g = pixels[pixelIndex + 1];
-	    unsigned char r = pixels[pixelIndex + 2];
+		unsigned char g = pixels[pixelIndex + 1];
+		unsigned char r = pixels[pixelIndex + 2];
 
 		unsigned char grey = 0.114*b +0.587*g + 0.299*r;
 
@@ -120,7 +120,7 @@ void greyScale(char *fileName) {
 	if(sizeof(struct FileHeader) != 14 || sizeof(struct InfoHeader) != 40) {
 		printf("STRUCT MISALIGNMENT\n");
 	}
-	
+
 	struct FileHeader *fileHeader = (struct FileHeader*)malloc(sizeof(struct FileHeader));
 	struct InfoHeader *infoHeader = (struct InfoHeader*)malloc(sizeof(struct InfoHeader));
 	if(fileHeader == NULL || infoHeader == NULL) {
