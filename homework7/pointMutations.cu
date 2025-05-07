@@ -143,12 +143,11 @@ int main() {
 	int numThreadsPerBlock = 256;
 	int numBlocks = (SIZE + numThreadsPerBlock * 8 - 1)/(numThreadsPerBlock * 8);
 
-	printf("WARMUP\n");
+	//warmup
 	count_hamming_distance<<<numBlocks, numThreadsPerBlock>>>(d_data_s, d_data_t, SIZE, d_res);
 	cudaDeviceSynchronize();
 	cudaMemset(d_res, 0, sizeof(long));
 
-	printf("SECOND KERNEL CALL\n");
 	clock_t start, end;
 	start = clock();
 	count_hamming_distance<<<numBlocks, numThreadsPerBlock>>>(d_data_s, d_data_t, SIZE, d_res);
@@ -173,13 +172,16 @@ int main() {
 
 	if(*hamming_distance != cpu_res) {
 		printf("WRONG OUTPUT\n");
-		printf("GPU RES: %llu AND CPU RES: %llu\n", *hamming_distance, cpu_res);
+		printf("GPU RES: %llu\nCPU RES: %llu\n", *hamming_distance, cpu_res);
 	}
 	else {
-		printf("GPU RES: %llu AND CPU RES: %llu\n", *hamming_distance, cpu_res);
+		printf("GPU RES: %llu\nCPU RES: %llu\n", *hamming_distance, cpu_res);
 	}
 
 	printf("GPU TIME: %f\nCPU TIME: %f\n", gpu_time, cpu_time);
+	printf("GPU is %f times faster\n", (cpu_time/gpu_time));
+
+	cleanup();
 }
 
 

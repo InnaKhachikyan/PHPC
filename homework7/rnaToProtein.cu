@@ -52,7 +52,6 @@ void memoryAllocAndCopy() {
 	}
 
 	err = cudaMemcpy(d_data, data, sizeof(data[0])*SIZE*3, cudaMemcpyHostToDevice);
-	//err2 = cudaMemcpy(d_output, output, sizeof(output[0])*SIZE, cudaMemcpyHostToDevice);
 	if(err != cudaSuccess || err2 != cudaSuccess) {
 		printf("Memory copy to device failed\n");
 		cleanup();
@@ -217,8 +216,8 @@ int main() {
 	}
 
 	printf("GPU time: %f\nCPU time: %f\n", gpu_time, cpu_time);
-	
+	printf("GPU is %f times faster\n", (cpu_time/gpu_time));
 
-
+	cleanup();
 
 }	

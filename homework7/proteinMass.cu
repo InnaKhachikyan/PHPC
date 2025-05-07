@@ -7,9 +7,9 @@
 
 #define SIZE 10000000
 
-char *alphabet, *data;
-double *output;
-float *protein;
+char *alphabet, *data, *d_data;
+double *output, *d_output;
+float *protein, *d_protein;
 
 char* initializeArray(char *data, char *alphabet, int size) {
 	data = (char*)malloc(sizeof(char)*size);
@@ -23,6 +23,38 @@ char* initializeArray(char *data, char *alphabet, int size) {
 	}
 	return data;
 }
+
+void cleanup() {
+	if(alphabet) {
+		free(alphabet);
+		alphabet = NULL;
+	}
+	if(data) {
+		free(data);
+		data = NULL;
+	}
+	if(d_data) {
+		cudaFree(d_data);
+		d_data = NULL;
+	}
+	if(output) {
+		free(output);
+		output = NULL;
+	}
+	if(d_output) {
+		cudaFree(d_output);
+		d_output = NULL;
+	}
+	if(protein) {
+		free(protein);
+		protein = NULL;
+	}
+	if(d_protein) {
+		cudaFree(d_protein);
+		d_protein = NULL;
+	}
+}
+
 
 char* initializeAlphabet(char *alphabet) {
 	alphabet = (char*)malloc(sizeof(char)*26);
@@ -89,6 +121,64 @@ float* initializeProtein(float *protein) {
 	return protein;
 }
 
+void memoryAllocAndCopy() {
+	protein = initializeProtein(protein);
+	alphabet = initializeAlphabet(alphabet);
+
+	data = initializeArray(data, alphabet, SIZE);
+	if(!data) {
+		printf("Initialization failed\n");
+		cleanup();
+		exit(1);
+	}
+
+	output = (double*)malloc(sizeof(double));
+	if(!output) {
+		printf("Memory allocation Failed\n");
+		cleanup();
+		exit(1);
+	}
+	*output = 0;
+
+	cudaError_t err = cudaMalloc((void**)&d_data, sizeof(char)*SIZE);
+	if(err != cudaSuccess) {
+		printf("Memory allocation failed with code %s\n", cudaGetErrorString(err));
+		cleanup();
+		exit(1);
+	}
+	err = cudaMemcpy(d_data, data, sizeof(char)*SIZE, cudaMemcpyHostToDevice);
+	if(err != cudaSuccess) {
+		printf("Memory allocation failed with code %s\n", cudaGetErrorString(err));
+		cleanup();
+		exit(1);
+	}       
+
+	err = cudaMalloc((void**)&d_output, sizeof(double));
+	if(err != cudaSuccess) {
+		printf("Memory allocation failed with code %s\n", cudaGetErrorString(err));
+		cleanup();
+		exit(1);
+	}       
+	err = cudaMemcpy(d_output, output, sizeof(double), cudaMemcpyHostToDevice);
+	if(err != cudaSuccess) {
+		printf("Memory allocation failed with code %s\n", cudaGetErrorString(err));
+		cleanup();
+		exit(1);
+	}
+
+	err = cudaMalloc((void**)&d_protein, sizeof(float)*26);
+	if(err != cudaSuccess) {
+		printf("Memory allocation failed with code %s\n", cudaGetErrorString(err));
+		cleanup();
+		exit(1);
+	}
+	err = cudaMemcpy(d_protein, protein, sizeof(float)*26, cudaMemcpyHostToDevice);
+	if(err != cudaSuccess) {
+		printf("Memory allocation failed with code %s\n", cudaGetErrorString(err));
+		cleanup();
+		exit(1);
+	}
+}
 
 __global__ void protein_mass(char *data, double *output, int n, float *protein)
 {
@@ -155,119 +245,28 @@ __global__ void protein_mass(char *data, double *output, int n, float *protein)
 
 int main() {
 
-	protein = initializeProtein(protein);
-	alphabet = initializeAlphabet(alphabet);
-
-	data = initializeArray(data, alphabet, SIZE);
-	if(!data) {
-		printf("Initialization failed\n");
-		return -1;
-	}
-
-	output = (double*)malloc(sizeof(double));
-	if(!output) {
-		printf("Memory allocation Failed\n");
-		return 1;
-	}
-	*output = 0;
-
-	char *d_data = NULL;
-	cudaError_t err = cudaMalloc((void**)&d_data, sizeof(char)*SIZE);
-	if(err != cudaSuccess) {
-		printf("Memory allocation failed with code %s\n", cudaGetErrorString(err));
-		free(data);
-		free(protein);
-		free(alphabet);
-		data = NULL;
-		protein = NULL;
-		alphabet = NULL;
-		return 1;
-	}
-	err = cudaMemcpy(d_data, data, sizeof(char)*SIZE, cudaMemcpyHostToDevice);
-	if(err != cudaSuccess) {
-		printf("Memory allocation failed with code %s\n", cudaGetErrorString(err));
-		free(data);
-		free(protein);
-		free(alphabet);
-		data = NULL;
-		protein = NULL;
-		alphabet = NULL;
-		return 1;
-	}       
-
-	double *d_output = NULL;
-	err = cudaMalloc((void**)&d_output, sizeof(double));
-	if(err != cudaSuccess) {
-		printf("Memory allocation failed with code %s\n", cudaGetErrorString(err));
-		free(data);
-		free(protein);
-		free(alphabet);
-		data = NULL;
-		protein = NULL;
-		alphabet = NULL;
-		return 1;
-	}       
-	err = cudaMemcpy(d_output, output, sizeof(double), cudaMemcpyHostToDevice);
-	if(err != cudaSuccess) {
-		printf("Memory allocation failed with code %s\n", cudaGetErrorString(err));
-		free(data);
-		free(protein);
-		free(alphabet);
-		data = NULL;
-		protein = NULL;
-		alphabet = NULL;
-		return 1;
-	}
-
-	float *d_protein = NULL;
-	err = cudaMalloc((void**)&d_protein, sizeof(float)*26);
-	if(err != cudaSuccess) {
-		printf("Memory allocation failed with code %s\n", cudaGetErrorString(err));
-		free(data);
-		free(protein);
-		free(alphabet);
-		data = NULL;
-		protein = NULL;
-		alphabet = NULL;
-		return 1;
-	}
-	err = cudaMemcpy(d_protein, protein, sizeof(float)*26, cudaMemcpyHostToDevice);
-	if(err != cudaSuccess) {
-		printf("Memory allocation failed with code %s\n", cudaGetErrorString(err));
-		free(data);
-		free(protein);
-		free(alphabet);
-		data = NULL;
-		protein = NULL;
-		alphabet = NULL;
-		return 1;
-	}
+	memoryAllocAndCopy();
 
 	int numThreadsPerBlock = 256;
 	int numBlocks = (SIZE + numThreadsPerBlock  * 8- 1)/(numThreadsPerBlock * 8);
 
-	printf("WARMUP\n");
+	//warmup
 	protein_mass<<<numBlocks, numThreadsPerBlock>>>(d_data, d_output, SIZE, d_protein);
 	cudaDeviceSynchronize();
 	cudaMemset(d_output, 0, sizeof(double));
 
-	printf("SECOND Kernel CALL\n");
 	clock_t start, end;
 	start = clock();
 	protein_mass<<<numBlocks, numThreadsPerBlock>>>(d_data, d_output, SIZE, d_protein);
 	cudaDeviceSynchronize();
 	end = clock();
 	double gpu_time = (double)(end-start)*1000.0/CLOCKS_PER_SEC;
-	err = cudaMemcpy(output, d_output, sizeof(double), cudaMemcpyDeviceToHost);
+
+	cudaError_t err = cudaMemcpy(output, d_output, sizeof(double), cudaMemcpyDeviceToHost);
 	if(err != cudaSuccess) {
 		printf("Memory allocation failed with code %s\n", cudaGetErrorString(err));
-		free(data);
-		free(protein);
-		free(alphabet);
-		data = NULL;
-		protein = NULL;
-		alphabet = NULL;
-		return 1;
+		cleanup();
+		exit(1);
 	}
 
 	start = clock();
@@ -279,13 +278,16 @@ int main() {
 	double cpu_time = (double)(end - start) * 1000.0/CLOCKS_PER_SEC;
 
 	if(*output != cpu_output) {
+		printf("WRONG OUTPUT\n");
 		printf("%f AND %f\n", *output, cpu_output);
 		printf("diff %f\n", cpu_output-(*output));
-		printf("WRONG OUTPUT\n");
 	}
 	else {
 		printf("%f AND %f\n", *output, cpu_output);
 	}
 
 	printf("GPU TIME: %f\nCPU TIME: %f\n", gpu_time, cpu_time);
+	printf("GPU is %f times faster\n", (cpu_time/gpu_time));
+
+	cleanup();
 }

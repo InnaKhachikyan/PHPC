@@ -5,15 +5,16 @@
 #include <stdlib.h>
 #include <time.h>
 
-#define SIZE 1000
+#define SIZE 1000000
 
-char *dna, *data;
+char *dna, *data, *d_data;
+int *cpu_res, *gpu_res, *d_res;
 
 char* initializeArray(char *data, char *dna, int size) {
 	data = (char*)malloc(sizeof(char)*size);
 	if(!data) {
 		printf("Memory not allocated\n");
-		return NULL;
+		exit(1);
 	}
 	srand(time(NULL));
 	for(int i = 0; i < SIZE; i++) {
@@ -22,73 +23,74 @@ char* initializeArray(char *data, char *dna, int size) {
 	return data;
 }
 
-void allocCudaChar(char **d_arr, char *data, int size) {
-        cudaError_t err = cudaMalloc((void**)d_arr, sizeof(data[0])*size);
-        if(err != cudaSuccess) {
-                printf("Memory allocation failed with code %s\n", cudaGetErrorString(err));
-                free(data);
-                data = NULL;
-                exit(1);
-        }
-}
-
-void allocCudaInt(int **d_arr, int *data, int size) {
-        cudaError_t err = cudaMalloc((void**)d_arr, sizeof(data[0])*size);
-        if(err != cudaSuccess) {
-                printf("Memory allocation failed with code %s\n", cudaGetErrorString(err));
-                free(data);
-                data = NULL;
-                exit(1);
-        }
-}
-
-
-void cudaHTDcopyChar(char *d_arr, char *data, int size) {
-        cudaError_t err = cudaMemcpy(d_arr, data, sizeof(data[0])*size, cudaMemcpyHostToDevice);
-        if(err != cudaSuccess) {
-                printf("Mem copy failed with code %s\n", cudaGetErrorString(err));
-                free(data);
-                data = NULL;
-                cudaFree(d_arr);
-                exit(1);
-        }
-}
-
-void cudaHTDcopyInt(int *d_arr, int *data, int size) {
-        cudaError_t err = cudaMemcpy(d_arr, data, sizeof(data[0])*size, cudaMemcpyHostToDevice);
-        if(err != cudaSuccess) {
-                printf("Mem copy failed with code %s\n", cudaGetErrorString(err));
-                free(data);
-                data = NULL;
-                cudaFree(d_arr);
-                exit(1);
-        }
-}
-
-void cudaDTHcopy(int *data, int *d_arr, int size) {
-        cudaError_t err = cudaMemcpy(data, d_arr, sizeof(int)*size, cudaMemcpyDeviceToHost);
-        if(err != cudaSuccess) {
-                printf("Mem cpy from device to host failed %s\n", cudaGetErrorString(err));
-                cudaFree(d_arr);
-                free(data);
-                data = NULL;
-                exit(1);
-        }
-}
-
-__global__ void countDna(char *data, char *dna, int size, int *result) {
-	for(int i = 0; i < (size + blockDim.x -1)/blockDim.x; i++) {
-		int index = threadIdx.x + blockDim.x*i;
-		if(index < size) {
-			int idx = data[index]-65;
-			atomicAdd(&result[idx], 1);
-		}
+void cleanup() {
+	if(dna) {
+		free(dna);
+		dna = NULL;
 	}
-	
+	if(data) {
+		free(data);
+		data = NULL;
+	}
+	if(cpu_res) {
+		free(cpu_res);
+		cpu_res = NULL;
+	}
+	if(gpu_res) {
+		free(gpu_res);
+		gpu_res = NULL;
+	}
+	if(d_data) {
+		cudaFree(d_data);
+		d_data = NULL;
+	}
+	if(d_res) {
+		cudaFree(d_res);
+		d_res = NULL;
+	}
 }
 
+void memoryAllocAndCopy() {
+	dna = (char*)malloc(sizeof(char)*4);
+	if(!dna) {
+		printf("Memory alloc failed\n");
+		exit(1);
+	}
+	dna[0] = 'A';
+	dna[1] = 'C';
+	dna[2] = 'G';
+	dna[3] = 'T';
 
-__global__ void countDna2(const char *data, int n, int *result)
+	data = initializeArray(data, dna, SIZE);
+	
+	gpu_res = (int*)malloc(sizeof(int)*4);
+	cpu_res = (int*)malloc(sizeof(int)*20);
+	if(!cpu_res || !gpu_res) {
+		printf("Memory allocation Failed\n");
+		cleanup();
+		exit(1);
+	}
+
+	memset(cpu_res, 0, 20 * sizeof(int));
+	memset(gpu_res, 0, 4 * sizeof(int));
+
+	cudaError_t err = cudaMalloc((void**)&d_data, sizeof(data[0])*SIZE);
+	cudaError_t err2 = cudaMalloc((void**)&d_res, sizeof(gpu_res[0])*4);
+	if(err != cudaSuccess || err2 != cudaSuccess) {
+		printf("Device memory allocation failed\n");
+		cleanup();
+		exit(1);
+	}
+	err = cudaMemcpy(d_data, data, sizeof(data[0])*SIZE, cudaMemcpyHostToDevice);
+	err2 = cudaMemcpy(d_res, gpu_res, sizeof(gpu_res[0])*4, cudaMemcpyHostToDevice);
+	if(err != cudaSuccess || err2 != cudaSuccess) {
+                printf("Device memory allocation failed\n");                                  
+                cleanup();
+                exit(1);
+        }
+}
+
+__global__ void countDna(const char *data, int n, int *result)
 {
     int sumA = 0, sumC = 0, sumG = 0, sumT = 0;
 
@@ -111,79 +113,46 @@ __global__ void countDna2(const char *data, int n, int *result)
 }
 
 int main() {
-	dna = (char*)malloc(sizeof(char)*4);
-	dna[0] = 'A';
-	dna[1] = 'C';
-	dna[2] = 'G';
-	dna[3] = 'T';
 
-	data = initializeArray(data, dna, SIZE);
-
-	if(!data) {
-		printf("Initialization failed\n");
-		return -1;
-	}
-	
-	int *result = (int*)malloc(sizeof(int)*20);
-	memset(result, 0, 20 * sizeof(int));
-
-	char *d_data = NULL;
-	allocCudaChar(&d_data, data, SIZE);
-	cudaHTDcopyChar(d_data, data, SIZE);
-
-	char *d_dna = NULL;
-	allocCudaChar(&d_dna, dna, 4);
-	cudaHTDcopyChar(d_dna, dna, 4);
-
-	int *d_res = NULL;
-	allocCudaInt(&d_res, result, 20);
-	cudaHTDcopyInt(d_res, result, 20);
+	memoryAllocAndCopy();
 
 	int numThreadsPerBlock = 256;
 	int numBlocks = (SIZE + numThreadsPerBlock - 1)/numThreadsPerBlock;
 
+	//warmup
+	countDna<<<numBlocks, numThreadsPerBlock>>>(d_data, SIZE, d_res);
+	cudaDeviceSynchronize();
+
+	cudaMemset(d_res, 0, 4 * sizeof(int));
+	
 	clock_t start, end;
 	start = clock();
-	countDna<<<numBlocks, numThreadsPerBlock>>>(d_data, d_dna, SIZE, d_res);
+	countDna<<<numBlocks, numThreadsPerBlock>>>(d_data, SIZE, d_res);
 	cudaDeviceSynchronize();
 	end = clock();
 	double gpu_time = (double)(end-start)*1000.0/CLOCKS_PER_SEC;
-	cudaDTHcopy(result, d_res, 20);
+	
+	cudaError_t err = cudaMemcpy(gpu_res, d_res, sizeof(int)*4, cudaMemcpyDeviceToHost);
+	if(err != cudaSuccess) {
+		printf("Device to host copy failed\n");
+		cleanup();
+		exit(1);
+	}
 
-	start = clock();
-	countDna2<<<numBlocks, numThreadsPerBlock>>>(d_data, SIZE, d_res);
-	cudaDeviceSynchronize();
-	end = clock();
-	double gpu2_time = (double)(end-start)*1000.0/CLOCKS_PER_SEC;
-
-	printf("A count: %d\n", result[0]);
-	printf("C count: %d\n", result[2]);
-	printf("G count: %d\n", result[6]);
-	printf("T count: %d\n", result[19]);
-
-	memset(result, 0, 20 * sizeof(int));
 	start = clock();
 	for(int i = 0; i < SIZE; i++) {
-		result[data[i]-65]++;
+		cpu_res[data[i]-65]++;
 	}
 	end = clock();
 	double cpu_time = (double)(end - start) * 1000.0/CLOCKS_PER_SEC;
-	printf("A count: %d\n", result[0]);
-        printf("C count: %d\n", result[2]);
-        printf("G count: %d\n", result[6]);
-        printf("T count: %d\n", result[19]);
 
-	printf("GPU TIME: %f\nGPU2 TIME: %f\nCPU TIME: %f\n", gpu_time, gpu2_time, cpu_time);
+	if(gpu_res[0] != cpu_res[0] || gpu_res[1] != cpu_res[2] || gpu_res[2] != cpu_res[6] || gpu_res[3] != cpu_res[19]) {
+		printf("WRONG OUTPUT!\n");
+	}
+
+	printf("GPU TIME: %f\nCPU TIME: %f\n", gpu_time, cpu_time);
+  printf("GPU %f times faster\n",(cpu_time/gpu_time));
+
+	cleanup();
 }
-
-
-
-
-
-
-
-
-
-
-
 
