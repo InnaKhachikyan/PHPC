@@ -180,8 +180,7 @@ void memoryAllocAndCopy() {
 	}
 }
 
-__global__ void protein_mass(char *data, double *output, int n, float *protein)
-{
+__global__ void protein_mass(char *data, double *output, int n, float *protein) {
 	unsigned int tid = threadIdx.x;
 	unsigned int idx = blockIdx.x * blockDim.x * 8 + threadIdx.x;
 	__shared__ double partial[256];
@@ -283,7 +282,7 @@ int main() {
 		printf("diff %f\n", cpu_output-(*output));
 	}
 	else {
-		printf("%f AND %f\n", *output, cpu_output);
+		printf("GPU res: %f\nCPU res: %f\n", *output, cpu_output);
 	}
 
 	printf("GPU TIME: %f\nCPU TIME: %f\n", gpu_time, cpu_time);

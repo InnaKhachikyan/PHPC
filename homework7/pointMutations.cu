@@ -22,18 +22,30 @@ char* initializeData(char *data, int size, char *dna) {
 }
 
 void cleanup() {
-	free(data_s);
-        free(data_t);
-        free(hamming_distance);
-        data_s = NULL;
-        data_t = NULL;
-        hamming_distance = NULL;
-        cudaFree(d_data_s);
-        cudaFree(d_data_t);
-        cudaFree(d_res);
-        d_data_s = NULL;
-        d_data_t = NULL;
-        d_res = NULL;
+	if(data_s) {
+		free(data_s);
+		data_s = NULL;
+	}
+	if(data_t) {
+		free(data_t);
+		data_t = NULL;
+	}
+	if(hamming_distance) {
+		free(hamming_distance);
+		hamming_distance = NULL;
+	}
+	if(d_data_s) {
+		cudaFree(d_data_s);
+		d_data_s = NULL;
+	}
+	if(d_data_t) {
+		cudaFree(d_data_t);
+		d_data_t = NULL;
+	}
+	if(d_res) {
+		cudaFree(d_res);
+		d_res = NULL;
+	}
 }
 
 void memoryAllocAndCopy(){
@@ -57,10 +69,10 @@ void memoryAllocAndCopy(){
 	err2 = cudaMemcpy(d_data_t, data_t, sizeof(data_t[0])*SIZE, cudaMemcpyHostToDevice);
 	err3 - cudaMemcpy(d_res, hamming_distance, sizeof(unsigned long long), cudaMemcpyHostToDevice);
 	if(err != cudaSuccess || err2 != cudaSuccess || err3 != cudaSuccess) {
-                printf("Device memory copy failed\n");
+		printf("Device memory copy failed\n");
 		cleanup();
-                exit(1);
-        }
+		exit(1);
+	}
 }
 
 __global__ void count_hamming_distance(char *data_s, char *data_t, int size, unsigned long long *res) {
@@ -126,20 +138,19 @@ __global__ void count_hamming_distance(char *data_s, char *data_t, int size, uns
 	}
 }
 
-
 int main() {
 	dna = (char*)malloc(sizeof(char)*4);
-        dna[0] = 'A';
-        dna[1] = 'C';
-        dna[2] = 'G';
-        dna[3] = 'T';
+	dna[0] = 'A';
+	dna[1] = 'C';
+	dna[2] = 'G';
+	dna[3] = 'T';
 
 	srand(time(NULL));
 	data_s = initializeData(data_s, SIZE, dna);
 	data_t = initializeData(data_t, SIZE, dna);
 
 	memoryAllocAndCopy();
-	
+
 	int numThreadsPerBlock = 256;
 	int numBlocks = (SIZE + numThreadsPerBlock * 8 - 1)/(numThreadsPerBlock * 8);
 
@@ -185,4 +196,4 @@ int main() {
 }
 
 
-		
+

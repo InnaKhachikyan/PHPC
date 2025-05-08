@@ -62,7 +62,7 @@ void memoryAllocAndCopy() {
 	dna[3] = 'T';
 
 	data = initializeArray(data, dna, SIZE);
-	
+
 	gpu_res = (int*)malloc(sizeof(int)*4);
 	cpu_res = (int*)malloc(sizeof(int)*20);
 	if(!cpu_res || !gpu_res) {
@@ -84,32 +84,30 @@ void memoryAllocAndCopy() {
 	err = cudaMemcpy(d_data, data, sizeof(data[0])*SIZE, cudaMemcpyHostToDevice);
 	err2 = cudaMemcpy(d_res, gpu_res, sizeof(gpu_res[0])*4, cudaMemcpyHostToDevice);
 	if(err != cudaSuccess || err2 != cudaSuccess) {
-                printf("Device memory allocation failed\n");                                  
-                cleanup();
-                exit(1);
-        }
+		printf("Device memory allocation failed\n");                                  
+		cleanup();
+		exit(1);
+	}
 }
 
-__global__ void countDna(const char *data, int n, int *result)
-{
-    int sumA = 0, sumC = 0, sumG = 0, sumT = 0;
+__global__ void countDna(const char *data, int n, int *result) {
+	int sumA = 0, sumC = 0, sumG = 0, sumT = 0;
 
-    int idx    = blockIdx.x * blockDim.x + threadIdx.x;
-    int grid_stride = blockDim.x * gridDim.x;
+	int idx    = blockIdx.x * blockDim.x + threadIdx.x;
+	int grid_stride = blockDim.x * gridDim.x;
 
-    for (int i = idx; i < n; i += grid_stride)
-    {
-        char current = data[i];
-        sumA += (current == 'A');
-        sumC += (current == 'C');
-        sumG += (current == 'G');
-        sumT += (current == 'T');
-    }
+	for (int i = idx; i < n; i += grid_stride) {
+		char current = data[i];
+		sumA += (current == 'A');
+		sumC += (current == 'C');
+		sumG += (current == 'G');
+		sumT += (current == 'T');
+	}
 
-    atomicAdd(&result[0], sumA);
-    atomicAdd(&result[1], sumC);
-    atomicAdd(&result[2], sumG);
-    atomicAdd(&result[3], sumT);
+	atomicAdd(&result[0], sumA);
+	atomicAdd(&result[1], sumC);
+	atomicAdd(&result[2], sumG);
+	atomicAdd(&result[3], sumT);
 }
 
 int main() {
@@ -124,14 +122,14 @@ int main() {
 	cudaDeviceSynchronize();
 
 	cudaMemset(d_res, 0, 4 * sizeof(int));
-	
+
 	clock_t start, end;
 	start = clock();
 	countDna<<<numBlocks, numThreadsPerBlock>>>(d_data, SIZE, d_res);
 	cudaDeviceSynchronize();
 	end = clock();
 	double gpu_time = (double)(end-start)*1000.0/CLOCKS_PER_SEC;
-	
+
 	cudaError_t err = cudaMemcpy(gpu_res, d_res, sizeof(int)*4, cudaMemcpyDeviceToHost);
 	if(err != cudaSuccess) {
 		printf("Device to host copy failed\n");
@@ -151,7 +149,7 @@ int main() {
 	}
 
 	printf("GPU TIME: %f\nCPU TIME: %f\n", gpu_time, cpu_time);
-  printf("GPU %f times faster\n",(cpu_time/gpu_time));
+	printf("GPU %f times faster\n",(cpu_time/gpu_time));
 
 	cleanup();
 }

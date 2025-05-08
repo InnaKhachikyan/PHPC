@@ -21,6 +21,7 @@ char* initializeArray(char *data, char *dna, int size) {
 	}
 	return data;
 }
+
 void cleanup() {
 	if(dna) {
 		free(dna);
@@ -75,26 +76,24 @@ void memoryAllocAndCopy() {
 	err = cudaMemcpy(d_data, data, sizeof(data[0])*SIZE, cudaMemcpyHostToDevice);
 	err2 = cudaMemcpy(dd_data, data, sizeof(data[0])*SIZE, cudaMemcpyHostToDevice);
 	if(err != cudaSuccess || err2 != cudaSuccess) {
-                printf("Device memory allocation failed\n");                                  
-                cleanup();
-                exit(1);
-        }
+		printf("Device memory allocation failed\n");                                  
+		cleanup();
+		exit(1);
+	}
 }
 
 
-__global__ void rna_grid_stride(char *data, int n)
-{
-    int idx    = blockIdx.x * blockDim.x + threadIdx.x;
-    int grid_stride = blockDim.x * gridDim.x;
+__global__ void rna_grid_stride(char *data, int n) {
+	int idx    = blockIdx.x * blockDim.x + threadIdx.x;
+	int grid_stride = blockDim.x * gridDim.x;
 
-    for (int i = idx; i < n; i += grid_stride)
-    {
-        char current = data[i];
-	if(current == 'T') {
-		data[i] = 'U';
-		continue;
+	for (int i = idx; i < n; i += grid_stride) {
+		char current = data[i];
+		if(current == 'T') {
+			data[i] = 'U';
+			continue;
+		}
 	}
-    }
 }
 
 int main() {
@@ -134,7 +133,7 @@ int main() {
 	for(int i = 0; i < SIZE; i++) {
 		if(data[i] != gpu_res[i]) {
 			printf("Wrong output\n");
-      break;
+			break;
 		}
 	}
 
