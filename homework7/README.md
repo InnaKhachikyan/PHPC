@@ -14,8 +14,11 @@ In the main method countDna is called twice (the first one is for warmup).
 Time measurements show that the kernel works 12-13 times faster than the cpu on 1 million elements.
 
 Execution example:
+
 GPU TIME: 0.204000
+
 CPU TIME: 2.491000
+
 GPU 12.210784 times faster
 
 ### rna.cu
@@ -26,8 +29,11 @@ The same logic is written for the CPU, for sake of 'fair' time measurement, so t
 The time measurements show that the kernel works 135 times faster.
 
 Execution example:
+
 GPU TIME: 0.043000
+
 CPU TIME: 5.820000
+
 GPU is 135.348837 times faster
 
 ### pointMutation.cu
@@ -38,14 +44,21 @@ In this kernel each thread handles up to 8 elements: each thread loads up to 8 d
 First I hard coded the number of threads as the size of partialSum array (partialSum[256]), and the time measurements showed that the kernel was 120-124 times faster:
 
 Execution example:
+
 GPU TIME: 0.025000
+
 CPU TIME: 3.026000
+
 GPU is 121.040000 times faster
 
 However, whan I changed it to a dynamic size, which is a better implementation if the number of threads need to be changed, the time measurements showed that the kernel now is 100 times faster:
+
 Execution example:
+
 GPU TIME: 0.026000
+
 CPU TIME: 2.631000
+
 GPU is 101.192308 times faster
 
 Without the template it was only 90 times faster.
@@ -58,9 +71,13 @@ As in the popintMutation program each thread handles up to 8 elements. I used re
 
 First I hardcoded the shared array partialSum with the number of threads, but then changed it to dynamic size. 
 The kernel works up to 53 times faster.
+
 Execution example:
+
 GPU TIME: 0.595000
+
 CPU TIME: 32.073000
+
 GPU is 53.904202 times faster
 
 ### rnaToProtein.cu
@@ -70,6 +87,9 @@ In the kernel I copy the table from constant memory to shared, so that each bloc
 The kernel works up to 58 times faster.
 
 Execution example:
+
 GPU time: 0.337000
+
 CPU time: 19.591000
+
 GPU is 58.133531 times faster
