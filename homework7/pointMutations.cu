@@ -5,6 +5,7 @@
 #include <stdlib.h>
 
 #define SIZE 1000000
+#define NUM_THREADS 256
 
 char *data_s, *data_t, *dna, *d_data_s, *d_data_t;
 unsigned long long *hamming_distance, *d_res;
@@ -75,10 +76,11 @@ void memoryAllocAndCopy(){
 	}
 }
 
+template<int BLOCK_SIZE>
 __global__ void count_hamming_distance(char *data_s, char *data_t, int size, unsigned long long *res) {
 	int tid = threadIdx.x;
 	int idx = blockIdx.x * blockDim.x * 8 + threadIdx.x;
-	__shared__ long partialSum[256];
+	extern __shared__ long partialSum[];
 
 	long partial = 0;
 
@@ -117,11 +119,22 @@ __global__ void count_hamming_distance(char *data_s, char *data_t, int size, uns
 	partialSum[tid] = partial;
 	__syncthreads();
 
-	if(blockDim.x >= 256 && tid < 128) partialSum[tid] += partialSum[tid + 128];
-	__syncthreads();
-
-	if(blockDim.x >= 128 && tid < 64) partialSum[tid] += partialSum[tid + 64];
-	__syncthreads();
+	if constexpr (BLOCK_SIZE >= 1024) {
+        	if (tid < 512) partialSum[tid] += partialSum[tid + 512];
+        	__syncthreads();
+	}
+	if constexpr (BLOCK_SIZE >= 512) {
+		if (tid < 256) partialSum[tid] += partialSum[tid + 256];
+        	__syncthreads();
+    	}
+	if constexpr (BLOCK_SIZE >= 256) {
+		if (tid < 128) partialSum[tid] += partialSum[tid + 128];
+        	__syncthreads();
+	}
+	if constexpr (BLOCK_SIZE >= 128) {
+		if (tid <  64) partialSum[tid] += partialSum[tid +  64];
+        	__syncthreads();
+	}
 
 	if(tid < 32) {
 		volatile long *vsmem = partialSum;
@@ -147,21 +160,23 @@ int main() {
 
 	srand(time(NULL));
 	data_s = initializeData(data_s, SIZE, dna);
-	data_t = initializeData(data_t, SIZE, dna);
+	data_t = initializeData(data_t, SIZE,dna);
 
 	memoryAllocAndCopy();
 
-	int numThreadsPerBlock = 256;
+	int numThreadsPerBlock = NUM_THREADS;
 	int numBlocks = (SIZE + numThreadsPerBlock * 8 - 1)/(numThreadsPerBlock * 8);
+	size_t sharedSize = numThreadsPerBlock * sizeof(long);
+	constexpr int BLOCK_SIZE = NUM_THREADS;
 
 	//warmup
-	count_hamming_distance<<<numBlocks, numThreadsPerBlock>>>(d_data_s, d_data_t, SIZE, d_res);
+	count_hamming_distance<BLOCK_SIZE><<<numBlocks, numThreadsPerBlock, sharedSize>>>(d_data_s, d_data_t, SIZE, d_res);
 	cudaDeviceSynchronize();
 	cudaMemset(d_res, 0, sizeof(long));
 
 	clock_t start, end;
 	start = clock();
-	count_hamming_distance<<<numBlocks, numThreadsPerBlock>>>(d_data_s, d_data_t, SIZE, d_res);
+	count_hamming_distance<BLOCK_SIZE><<<numBlocks, numThreadsPerBlock, sharedSize>>>(d_data_s, d_data_t, SIZE, d_res);
 	cudaDeviceSynchronize();
 	end = clock();
 
@@ -194,6 +209,4 @@ int main() {
 
 	cleanup();
 }
-
-
-
+ 

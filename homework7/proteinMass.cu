@@ -6,6 +6,7 @@
 #include <time.h>
 
 #define SIZE 10000000
+#define NUM_THREADS 256
 
 char *alphabet, *data, *d_data;
 double *output, *d_output;
@@ -180,10 +181,11 @@ void memoryAllocAndCopy() {
 	}
 }
 
+template<int BLOCK_SIZE>
 __global__ void protein_mass(char *data, double *output, int n, float *protein) {
 	unsigned int tid = threadIdx.x;
 	unsigned int idx = blockIdx.x * blockDim.x * 8 + threadIdx.x;
-	__shared__ double partial[256];
+	extern __shared__ double partial[];
 
 	double sum = 0.0;
 
@@ -222,11 +224,25 @@ __global__ void protein_mass(char *data, double *output, int n, float *protein) 
 	partial[tid] = sum;
 	__syncthreads();
 
-	if (blockDim.x>=256 && tid < 128) partial[tid] += partial[tid + 128];
-	__syncthreads();
+	if constexpr (BLOCK_SIZE>=1024) {
+		if(tid < 512) partial[tid] += partial[tid + 128];
+        	__syncthreads();
+	}
+	
+	if constexpr (BLOCK_SIZE>=512) { 
+		if(tid < 256) partial[tid] += partial[tid + 128];
+        	__syncthreads();
+	}
 
-	if (blockDim.x>=128 && tid < 64) partial[tid] += partial[tid + 64];
-	__syncthreads();
+	if constexpr (BLOCK_SIZE>=256) {
+		if(tid < 128) partial[tid] += partial[tid + 128];
+		__syncthreads();
+	}
+
+	if constexpr (BLOCK_SIZE>=128) {
+		if(tid < 64) partial[tid] += partial[tid + 64];
+		__syncthreads();
+	}
 
 	if (tid < 32) {
 		volatile double *vsmem = partial;
@@ -246,17 +262,19 @@ int main() {
 
 	memoryAllocAndCopy();
 
-	int numThreadsPerBlock = 256;
+	int numThreadsPerBlock = NUM_THREADS;
 	int numBlocks = (SIZE + numThreadsPerBlock  * 8- 1)/(numThreadsPerBlock * 8);
+	constexpr int BLOCK_SIZE = NUM_THREADS;
+	size_t sharedSize = numThreadsPerBlock*sizeof(double);
 
 	//warmup
-	protein_mass<<<numBlocks, numThreadsPerBlock>>>(d_data, d_output, SIZE, d_protein);
+	protein_mass<BLOCK_SIZE><<<numBlocks, numThreadsPerBlock, sharedSize>>>(d_data, d_output, SIZE, d_protein);
 	cudaDeviceSynchronize();
 	cudaMemset(d_output, 0, sizeof(double));
 
 	clock_t start, end;
 	start = clock();
-	protein_mass<<<numBlocks, numThreadsPerBlock>>>(d_data, d_output, SIZE, d_protein);
+	protein_mass<BLOCK_SIZE><<<numBlocks, numThreadsPerBlock, sharedSize>>>(d_data, d_output, SIZE, d_protein);
 	cudaDeviceSynchronize();
 	end = clock();
 	double gpu_time = (double)(end-start)*1000.0/CLOCKS_PER_SEC;
